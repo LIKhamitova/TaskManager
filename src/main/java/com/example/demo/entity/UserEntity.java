@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +12,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString
-
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
