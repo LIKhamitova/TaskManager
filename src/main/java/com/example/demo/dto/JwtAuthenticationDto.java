@@ -1,4 +1,9 @@
 package com.example.demo.dto;
 
-public class JwtAuthenticationDTO {
+import lombok.Data;
+
+@Data
+public class JwtAuthenticationDto {
+    private String token;
+    private String refreshToken;
 }

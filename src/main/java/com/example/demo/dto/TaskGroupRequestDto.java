@@ -1,7 +1,4 @@
 package com.example.demo.dto;
-
-
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -13,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskGroupDTORequest {
+public class TaskGroupRequestDto {
         @NotBlank
         private String name;
         @Size(max = 500)

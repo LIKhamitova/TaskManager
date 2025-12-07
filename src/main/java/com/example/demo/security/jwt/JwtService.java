@@ -1,78 +1,118 @@
 package com.example.demo.security.jwt;
 
-import com.example.demo.dto.JwtAuthenticationDTO;
+import com.example.demo.dto.JwtAuthenticationDto;
+import com.example.demo.entity.RoleEntity;
+import com.example.demo.entity.UserEntity;
 import com.example.demo.exception.JwtAuthenticationException;
+import com.example.demo.exception.UserNotAuthenticatedException;
+import com.example.demo.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
+
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
+
 public class JwtService {
 
-    @Value("${jwt.token.secret}")
+    private final UserRepository userRepository;
+
+   @Value("${jwt.token.secret}")
     private String Jwtsecret;
 
-    @Value("${jwt.token.expired}")
-    private long validityInMilliseconds;
+    public JwtAuthenticationDto generateAuthToken(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotAuthenticatedException("There is no authorized user with this email"));
 
-    //Получение токена по email
-    public JwtAuthenticationDTO generateAuthToken(String email){
-        JwtAuthenticationDTO jwtDto = new JwtAuthenticationDTO();
-        jwtDto.setToken(generateJwtToken(email));
+         JwtAuthenticationDto jwtDto = new JwtAuthenticationDto();
+
+        List<String> roles = user.getRoles().stream()
+                .map(RoleEntity::getName)
+                .toList();
+
+        jwtDto.setToken(generateJwtToken(email, roles));
+        jwtDto.setRefreshToken(generateRefreshToken(email, roles));
+        return jwtDto;
     }
 
-    private String generateJwtToken(String email) {
-      return Jwts.builder()
+    public JwtAuthenticationDto refreshBaseToken(String email, String refreshToken){
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotAuthenticatedException("There is no authorized user with this email"));
+
+        JwtAuthenticationDto jwtDto = new JwtAuthenticationDto();
+
+        List<String> roles = user.getRoles().stream()
+                .map(RoleEntity::getName)
+                .toList();
+
+        jwtDto.setToken(generateJwtToken(email, roles));
+        jwtDto.setRefreshToken(refreshToken);
+        return jwtDto;
+    }
+
+
+    private String generateJwtToken(String email, List<String> roles) {
+        Date date = Date.from(LocalDateTime.now().plusMinutes(10).atZone(ZoneId.systemDefault()).toInstant());
+
+        return Jwts.builder()
                 .subject(email)
-//                .claim("roles", getRoleNames(roles))
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
-                .signWith(generateSingInKey())
+                .claim("roles", roles)
+                .expiration(date)
+                .signWith(generateSignInKey())
                 .compact();
     }
-    //Base64 декодирование секретной фразы
-    //Возвращает SecretKey для использования с HS256
-    private SecretKey generateSingInKey(){
-           byte[] keyBytes = Decoders.BASE64.decode(Jwtsecret);
-           return Keys.hmacShaKeyFor(keyBytes);
+
+    private String generateRefreshToken(String email, List<String> roles) {
+        Date date = Date.from(LocalDateTime.now().plusDays(1).atZone(ZoneId.systemDefault()).toInstant());
+
+        return Jwts.builder()
+                .subject(email)
+                .claim("roles", roles)
+                .expiration(date)
+                .signWith(generateSignInKey())
+                .compact();
     }
 
-    //Достаем email из токена
+    private SecretKey generateSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(Jwtsecret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+
     public String getEmailFromToken(String token) {
         return Jwts.parser()
-                .verifyWith(generateSingInKey())
+                .verifyWith(generateSignInKey())
                 .build()
                 .parseSignedClaims(token)
-               .getPayload()
+                .getPayload()
                 .getSubject();
     }
-    //Проверка токена на валидность
-       public boolean validateToken(String token) {
+
+    public boolean validateToken(String token) {
         try {
-            Jws<Claims> claims = Jwts.parser()
-                    .verifyWith(generateSingInKey())
+             Jwts.parser()
+                    .verifyWith(generateSignInKey())
                     .build()
-                    .parseSignedClaims(token)
-                    ;
-
-            return !claims.getPayload().getExpiration().before(new Date()); //доп. не истек ли срок действия токена
-        } catch (ExpiredJwtException e) {
-            log.debug("JWT token is expired: {}", e.getMessage());
+                    .parseSignedClaims(token);
+            return true;
+        }  catch (ExpiredJwtException e) {
+        log.debug("JWT token is expired: {}", e.getMessage());
         throw new JwtAuthenticationException("JWT token is expired", e);
-    } catch (MalformedJwtException e) {
-            log.debug("JWT token is malformed: {}", e.getMessage());
-        throw new JwtAuthenticationException("JWT token is malformed", e);
-    } catch (JwtException | IllegalArgumentException e) {
-            log.debug("JWT token is invalid: {}", e.getMessage());
+      } catch (JwtException | IllegalArgumentException e) {
+        log.debug("JWT token is invalid: {}", e.getMessage());
         throw new JwtAuthenticationException("JWT token is invalid", e);
+      }
     }
-        }
-    }
-
+}

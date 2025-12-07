@@ -1,13 +1,14 @@
 package com.example.demo.exception;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import org.springframework.security.core.AuthenticationException;
 
 
 @Getter
-@AllArgsConstructor
-public class UserNotFoundByEmail extends RuntimeException {
-    public UserNotFoundByEmail(String message) {
+public class UserNotAuthenticatedException extends AuthenticationException {
+    public UserNotAuthenticatedException(String message) {
+
         super(message);
     }
 }

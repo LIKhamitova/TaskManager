@@ -1,7 +1,7 @@
 package com.example.demo.exception;
 
-public class TaskGroupNotFoundException extends RuntimeException {
-    public TaskGroupNotFoundException(String message) {
+public class OtherOwnerException extends RuntimeException {
+    public OtherOwnerException(String message) {
         super(message);
     }
 }

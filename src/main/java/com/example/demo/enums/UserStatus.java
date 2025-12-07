@@ -1,4 +1,4 @@
-package com.example.demo.entity;
+package com.example.demo.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -6,5 +6,5 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum UserStatus {
-    ACTIVE, DELETED, BLOCKED
+    ACTIVE, BLOCKED
 }

@@ -1,4 +1,8 @@
 package com.example.demo.dto;
 
-public class RefreshTokenDTO {
+import lombok.Data;
+
+@Data
+public class RefreshTokenDto {
+    private String refreshToken;
 }

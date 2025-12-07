@@ -11,13 +11,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTORequest {
+public class UserRequestDto {
     @NotBlank
-    String name;
+    private String name;
     @NotNull
     @Email
-    String email;
+    private String email;
     @NotNull
     @Size(min = 5, message = "Password must be at least 5 characters")
-    String password;
+    private String password;
 }

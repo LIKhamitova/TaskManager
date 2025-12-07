@@ -1,5 +1,6 @@
-package com.example.demo.security.jwt;
+package com.example.demo.security;
 
+import com.example.demo.exception.UserNotAuthenticatedException;
 import com.example.demo.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -13,9 +14,10 @@ import org.springframework.stereotype.Service;
 public class CustomUserServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
+
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByEmail(username).map(CustomUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+                .orElseThrow(() -> new UserNotAuthenticatedException(username));
     }
 }
